@@ -1,0 +1,120 @@
+// Esquema de base de datos - Sistema de Control de Extintores
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Rol {
+  ADMINISTRADOR
+  INSPECTOR
+}
+
+enum TipoAgente {
+  PQS
+  CO2
+  ESPUMA
+  AGUA
+  HFC
+  PQS_PURPURA_K
+  WET_CHEMICAL
+  OTRO
+}
+
+enum UnidadCapacidad {
+  KG
+  L
+}
+
+enum TipoServicio {
+  NUEVO
+  RECARGA
+  MANTENIMIENTO
+  INSPECCION
+}
+
+enum RespuestaChecklist {
+  SI
+  NO
+  NO_APLICA
+}
+
+model Usuario {
+  id           String       @id @default(cuid())
+  nombre       String
+  email        String       @unique
+  passwordHash String
+  rol          Rol          @default(INSPECTOR)
+  activo       Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  inspecciones Inspeccion[]
+
+  @@map("usuarios")
+}
+
+model Ubicacion {
+  id          String     @id @default(cuid())
+  edificio    String
+  piso        String
+  area        String
+  descripcion String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  extintores  Extintor[]
+
+  @@map("ubicaciones")
+}
+
+model Extintor {
+  id                    String       @id @default(cuid())
+  codigo                String       @unique
+  numeroSerie           String?
+  ubicacionId           String
+  ubicacion             Ubicacion    @relation(fields: [ubicacionId], references: [id])
+  ubicacionDescripcion  String?
+  tipoAgente            TipoAgente
+  capacidad             Float
+  unidadCapacidad       UnidadCapacidad
+  fechaFabricacion      DateTime?
+  fechaRecarga          DateTime
+  fechaVencimiento      DateTime
+  tipoServicio          TipoServicio @default(NUEVO)
+  requiereMantenimiento Boolean      @default(false)
+  activo                Boolean      @default(true)
+  foto                  String?
+  observaciones         String?
+  fechaRegistro         DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+  inspecciones          Inspeccion[]
+
+  @@map("extintores")
+}
+
+model Inspeccion {
+  id            String                @id @default(cuid())
+  extintorId    String
+  extintor      Extintor              @relation(fields: [extintorId], references: [id], onDelete: Cascade)
+  inspectorId   String
+  inspector     Usuario               @relation(fields: [inspectorId], references: [id])
+  fecha         DateTime              @default(now())
+  aprobada      Boolean               @default(true)
+  observaciones String?
+  foto          String?
+  respuestas    RespuestaInspeccion[]
+
+  @@map("inspecciones")
+}
+
+model RespuestaInspeccion {
+  id           String             @id @default(cuid())
+  inspeccionId String
+  inspeccion   Inspeccion         @relation(fields: [inspeccionId], references: [id], onDelete: Cascade)
+  pregunta     String
+  respuesta    RespuestaChecklist
+
+  @@map("respuestas_inspeccion")
+}
