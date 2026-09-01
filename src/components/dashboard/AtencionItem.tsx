@@ -168,9 +168,29 @@ export function AtencionItem({ extintor }: { extintor: ExtintorConEstado }) {
 
           {datosActuales.problemasDetectados.length > 0 ? (
             <div className="space-y-1.5 sm:col-span-3">
-              <p className="text-xs font-medium text-slate-600">
-                Marcá lo que ya se solucionó (podés tildar solo algunas si falta terminar el resto):
-              </p>
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs font-medium text-slate-600">
+                  Marcá lo que ya se solucionó (podés tildar solo algunas si falta terminar el resto):
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const todasMarcadas = datosActuales.problemasDetectados.every(
+                      (p) => problemasChecked[p]
+                    );
+                    setProblemasChecked(
+                      Object.fromEntries(
+                        datosActuales.problemasDetectados.map((p) => [p, !todasMarcadas])
+                      )
+                    );
+                  }}
+                  className="shrink-0 text-xs font-semibold text-red-600 hover:underline"
+                >
+                  {datosActuales.problemasDetectados.every((p) => problemasChecked[p])
+                    ? "Desmarcar todos"
+                    : "Marcar todos como resueltos"}
+                </button>
+              </div>
               {datosActuales.problemasDetectados.map((p) => (
                 <label key={p} className="flex items-start gap-2 text-sm text-slate-700">
                   <input
