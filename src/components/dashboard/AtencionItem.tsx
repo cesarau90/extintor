@@ -79,6 +79,11 @@ export function AtencionItem({ extintor }: { extintor: ExtintorConEstado }) {
           <p className="truncate text-xs text-slate-500">
             {extintor.ubicacion.edificio} · {extintor.ubicacion.piso} · {extintor.ubicacion.area}
           </p>
+          {extintor.problemasDetectados.length > 0 && (
+            <p className="truncate text-xs text-amber-700">
+              ⚠ {extintor.problemasDetectados.join(" · ")}
+            </p>
+          )}
         </div>
         <div className="flex items-center justify-between gap-3 text-xs text-slate-500 sm:justify-end sm:text-right">
           <span className="whitespace-nowrap">Vence {formatearFecha(extintor.fechaVencimiento)}</span>

@@ -55,6 +55,21 @@ export default async function FichaExtintorPage({ params }: Props) {
           </Card>
         )}
 
+        {extintor.problemasDetectados.length > 0 && (
+          <Card className="border-amber-200 bg-amber-50">
+            <CardBody className="space-y-1.5">
+              <h2 className="text-sm font-semibold text-amber-800">
+                ⚠ Qué se detectó en la última inspección
+              </h2>
+              <ul className="list-disc space-y-0.5 pl-4 text-sm text-amber-800">
+                {extintor.problemasDetectados.map((p) => (
+                  <li key={p}>{p}</li>
+                ))}
+              </ul>
+            </CardBody>
+          </Card>
+        )}
+
         <Card>
           <CardBody className="space-y-1">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">

@@ -81,6 +81,11 @@ export default async function DashboardPage() {
                       <p className="truncate text-xs text-slate-500">
                         {e.ubicacion.edificio} · {e.ubicacion.piso} · {e.ubicacion.area}
                       </p>
+                      {e.problemasDetectados.length > 0 && (
+                        <p className="truncate text-xs text-amber-700">
+                          ⚠ {e.problemasDetectados.join(" · ")}
+                        </p>
+                      )}
                     </div>
                     <div className="flex items-center justify-between gap-3 text-xs text-slate-500 sm:justify-end sm:text-right">
                       <span>Vence {formatearFecha(e.fechaVencimiento)}</span>

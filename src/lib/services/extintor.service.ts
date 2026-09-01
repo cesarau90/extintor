@@ -1,21 +1,43 @@
 import { prisma } from "@/lib/prisma";
 import { calcularEstado, DIAS_ALERTA_VENCIMIENTO } from "@/lib/estado";
+import { esRespuestaProblema } from "@/lib/constants";
 import type { ExtintorConEstado } from "@/types";
 import type { Prisma } from "@prisma/client";
 
+const INCLUDE_ULTIMA_INSPECCION = {
+  ubicacion: true,
+  inspecciones: {
+    select: { fecha: true, respuestas: { select: { pregunta: true, respuesta: true } } },
+    orderBy: { fecha: "desc" as const },
+    take: 1,
+  },
+} satisfies Prisma.ExtintorInclude;
+
 function conEstado(
-  extintor: Prisma.ExtintorGetPayload<{
-    include: { ubicacion: true; inspecciones: { select: { fecha: true } } };
-  }>
+  extintor: Prisma.ExtintorGetPayload<{ include: typeof INCLUDE_ULTIMA_INSPECCION }>
 ): ExtintorConEstado {
   const { inspecciones, ...resto } = extintor;
+  const ultimaInspeccion = inspecciones[0];
+
+  // Los problemas puntuales solo se pueden mostrar si el estado actual
+  // "requiere mantenimiento" viene de esa última inspección: si alguien
+  // prendió la bandera a mano desde el formulario, no hay checklist que
+  // explique el motivo.
+  const problemasDetectados =
+    extintor.requiereMantenimiento && ultimaInspeccion
+      ? ultimaInspeccion.respuestas
+          .filter((r) => esRespuestaProblema(r.pregunta, r.respuesta))
+          .map((r) => r.pregunta)
+      : [];
+
   return {
     ...resto,
     estadoInfo: calcularEstado({
       fechaVencimiento: extintor.fechaVencimiento,
       requiereMantenimiento: extintor.requiereMantenimiento,
     }),
-    ultimaInspeccion: inspecciones[0]?.fecha ?? null,
+    ultimaInspeccion: ultimaInspeccion?.fecha ?? null,
+    problemasDetectados,
   };
 }
 
@@ -52,10 +74,7 @@ export async function listarExtintores(
 
   const extintores = await prisma.extintor.findMany({
     where,
-    include: {
-      ubicacion: true,
-      inspecciones: { select: { fecha: true }, orderBy: { fecha: "desc" }, take: 1 },
-    },
+    include: INCLUDE_ULTIMA_INSPECCION,
     orderBy: { codigo: "asc" },
   });
 
@@ -77,10 +96,7 @@ export async function obtenerExtintorPorCodigo(
 ): Promise<ExtintorConEstado | null> {
   const extintor = await prisma.extintor.findUnique({
     where: { codigo },
-    include: {
-      ubicacion: true,
-      inspecciones: { select: { fecha: true }, orderBy: { fecha: "desc" }, take: 1 },
-    },
+    include: INCLUDE_ULTIMA_INSPECCION,
   });
   if (!extintor) return null;
   return conEstado(extintor);

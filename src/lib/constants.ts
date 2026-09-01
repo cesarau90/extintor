@@ -42,6 +42,18 @@ export const CHECKLIST_INSPECCION: { pregunta: string; respuestaProblema: "SI" |
 
 export const PREGUNTAS_INSPECCION = CHECKLIST_INSPECCION.map((c) => c.pregunta);
 
+const RESPUESTA_PROBLEMA_POR_PREGUNTA = new Map(
+  CHECKLIST_INSPECCION.map((c) => [c.pregunta, c.respuestaProblema])
+);
+
+/** Indica si una respuesta puntual representa un problema para esa pregunta
+ * (para la mayoría "No" es el problema, salvo "golpes o corrosión" que es
+ * al revés: "Sí" es el problema). Usado tanto para decidir si una
+ * inspección aprueba, como para mostrar qué se detectó. */
+export function esRespuestaProblema(pregunta: string, respuesta: string): boolean {
+  return RESPUESTA_PROBLEMA_POR_PREGUNTA.get(pregunta) === respuesta;
+}
+
 export function labelTipoAgente(value: string): string {
   return TIPOS_AGENTE.find((t) => t.value === value)?.label ?? value;
 }

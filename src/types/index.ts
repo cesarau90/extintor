@@ -18,6 +18,10 @@ export type UbicacionConConteo = Ubicacion & {
 export type ExtintorConEstado = ExtintorConUbicacion & {
   estadoInfo: EstadoInfo;
   ultimaInspeccion: Date | null;
+  /** Preguntas del checklist que salieron mal en la última inspección
+   * (solo tiene contenido cuando estadoInfo.estado === "REQUIERE_MANTENIMIENTO"
+   * y ese estado vino de una inspección, no de un ajuste manual). */
+  problemasDetectados: string[];
 };
 
 export type InspeccionConDetalle = Inspeccion & {

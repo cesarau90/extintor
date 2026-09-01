@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { CHECKLIST_INSPECCION } from "@/lib/constants";
+import { esRespuestaProblema } from "@/lib/constants";
 import type { InspeccionInput } from "@/lib/validations/inspeccion.schema";
 
 /**
@@ -8,11 +8,12 @@ import type { InspeccionInput } from "@/lib/validations/inspeccion.schema";
  * "problema" definida en CHECKLIST_INSPECCION.
  */
 export function detectaProblema(respuestas: InspeccionInput["respuestas"]): boolean {
-  return respuestas.some((r) => {
-    const item = CHECKLIST_INSPECCION.find((c) => c.pregunta === r.pregunta);
-    if (!item) return false;
-    return r.respuesta === item.respuestaProblema;
-  });
+  return respuestas.some((r) => esRespuestaProblema(r.pregunta, r.respuesta));
+}
+
+/** Lista en texto plano las preguntas cuya respuesta representó un problema. */
+export function listarProblemas(respuestas: InspeccionInput["respuestas"]): string[] {
+  return respuestas.filter((r) => esRespuestaProblema(r.pregunta, r.respuesta)).map((r) => r.pregunta);
 }
 
 export async function crearInspeccion(params: {
