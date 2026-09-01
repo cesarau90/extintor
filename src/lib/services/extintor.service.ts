@@ -61,7 +61,11 @@ export async function listarExtintores(
 
   let resultado = extintores.map(conEstado);
 
-  if (filtros.estado) {
+  if (filtros.estado === "ATENCION") {
+    // Filtro combinado: cualquier extintor que no esté simplemente vigente
+    // (vencido, próximo a vencer o que requiere mantenimiento).
+    resultado = resultado.filter((e) => e.estadoInfo.estado !== "VIGENTE");
+  } else if (filtros.estado) {
     resultado = resultado.filter((e) => e.estadoInfo.estado === filtros.estado);
   }
 

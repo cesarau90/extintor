@@ -31,7 +31,7 @@ export default async function ExtintoresPage({ searchParams }: Props) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Extintores</h1>
           <p className="text-sm text-slate-500">
@@ -40,8 +40,8 @@ export default async function ExtintoresPage({ searchParams }: Props) {
           </p>
         </div>
         {session?.rol === "ADMINISTRADOR" && (
-          <Link href="/dashboard/extintores/nuevo">
-            <Button>+ Nuevo extintor</Button>
+          <Link href="/dashboard/extintores/nuevo" className="shrink-0">
+            <Button className="w-full sm:w-auto">+ Nuevo extintor</Button>
           </Link>
         )}
       </div>
@@ -53,6 +53,9 @@ export default async function ExtintoresPage({ searchParams }: Props) {
       </Card>
 
       <Card className="overflow-hidden">
+        <p className="border-b border-slate-100 px-4 py-2 text-xs text-slate-400 sm:hidden">
+          Desliza hacia los costados para ver toda la tabla →
+        </p>
         <ExtintoresTable extintores={extintores} rol={session!.rol} />
       </Card>
     </div>

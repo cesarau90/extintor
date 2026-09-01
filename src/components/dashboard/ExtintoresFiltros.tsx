@@ -6,6 +6,7 @@ import { Input, Select } from "@/components/ui/Input";
 import { TIPOS_AGENTE } from "@/lib/constants";
 
 const ESTADOS = [
+  { value: "ATENCION", label: "⚠ Requieren atención (todos)" },
   { value: "VIGENTE", label: "Vigente" },
   { value: "PROXIMO_A_VENCER", label: "Próximo a vencer" },
   { value: "VENCIDO", label: "Vencido" },
