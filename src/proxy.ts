@@ -4,7 +4,11 @@ import { jwtVerify } from "jose";
 const SESSION_COOKIE = "extintor_session";
 
 // Bajo /dashboard, algunas subrutas son exclusivas de ADMINISTRADOR.
-const RUTAS_SOLO_ADMIN = ["/dashboard/usuarios", "/dashboard/extintores/nuevo"];
+const RUTAS_SOLO_ADMIN = [
+  "/dashboard/usuarios",
+  "/dashboard/ubicaciones",
+  "/dashboard/extintores/nuevo",
+];
 
 function esRutaSoloAdmin(pathname: string): boolean {
   if (RUTAS_SOLO_ADMIN.some((r) => pathname.startsWith(r))) return true;

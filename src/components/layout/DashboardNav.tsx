@@ -16,6 +16,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/dashboard/extintores", label: "Extintores" },
+  { href: "/dashboard/ubicaciones", label: "Ubicaciones", soloAdmin: true },
   { href: "/dashboard/usuarios", label: "Usuarios", soloAdmin: true },
 ];
 

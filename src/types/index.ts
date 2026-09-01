@@ -11,6 +11,10 @@ export type ExtintorConUbicacion = Extintor & {
   ubicacion: Ubicacion;
 };
 
+export type UbicacionConConteo = Ubicacion & {
+  _count: { extintores: number };
+};
+
 export type ExtintorConEstado = ExtintorConUbicacion & {
   estadoInfo: EstadoInfo;
   ultimaInspeccion: Date | null;
