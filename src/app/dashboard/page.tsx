@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { calcularDashboardStats, calcularAlertas } from "@/lib/services/extintor.service";
+import { getSession } from "@/lib/auth";
 import { StatsCards } from "@/components/dashboard/StatsCards";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { EstadoBadge } from "@/components/extintor/EstadoBadge";
+import { AtencionItem } from "@/components/dashboard/AtencionItem";
 import { formatearFecha } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +13,13 @@ export const dynamic = "force-dynamic";
 const MAX_VISIBLES_EN_DASHBOARD = 8;
 
 export default async function DashboardPage() {
-  const [stats, alertas] = await Promise.all([calcularDashboardStats(), calcularAlertas()]);
+  const [stats, alertas, session] = await Promise.all([
+    calcularDashboardStats(),
+    calcularAlertas(),
+    getSession(),
+  ]);
+
+  const esAdmin = session?.rol === "ADMINISTRADOR";
 
   const conProblema = [
     ...alertas.vencidos,
@@ -55,25 +63,32 @@ export default async function DashboardPage() {
             </p>
           ) : (
             <ul className="divide-y divide-slate-100">
-              {urgentes.map((e) => (
-                <li key={e.id} className="flex flex-col gap-2 px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="min-w-0">
-                    <Link
-                      href={`/extintor/${e.codigo}`}
-                      className="font-medium text-slate-900 hover:underline"
-                    >
-                      {e.codigo}
-                    </Link>
-                    <p className="truncate text-xs text-slate-500">
-                      {e.ubicacion.edificio} · {e.ubicacion.piso} · {e.ubicacion.area}
-                    </p>
-                  </div>
-                  <div className="flex items-center justify-between gap-3 text-xs text-slate-500 sm:justify-end sm:text-right">
-                    <span>Vence {formatearFecha(e.fechaVencimiento)}</span>
-                    <EstadoBadge estadoInfo={e.estadoInfo} />
-                  </div>
-                </li>
-              ))}
+              {urgentes.map((e) =>
+                esAdmin ? (
+                  <AtencionItem key={e.id} extintor={e} />
+                ) : (
+                  <li
+                    key={e.id}
+                    className="flex flex-col gap-2 px-5 py-3 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div className="min-w-0">
+                      <Link
+                        href={`/extintor/${e.codigo}`}
+                        className="font-medium text-slate-900 hover:underline"
+                      >
+                        {e.codigo}
+                      </Link>
+                      <p className="truncate text-xs text-slate-500">
+                        {e.ubicacion.edificio} · {e.ubicacion.piso} · {e.ubicacion.area}
+                      </p>
+                    </div>
+                    <div className="flex items-center justify-between gap-3 text-xs text-slate-500 sm:justify-end sm:text-right">
+                      <span>Vence {formatearFecha(e.fechaVencimiento)}</span>
+                      <EstadoBadge estadoInfo={e.estadoInfo} />
+                    </div>
+                  </li>
+                )
+              )}
             </ul>
           )}
           {conProblema.length > MAX_VISIBLES_EN_DASHBOARD && (
