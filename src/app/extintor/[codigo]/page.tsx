@@ -54,8 +54,8 @@ export default async function FichaExtintorPage({ params }: Props) {
             // eslint-disable-next-line @next/next/no-img-element
             <img src={extintor.foto} alt={extintor.codigo} className="h-56 w-full object-cover" />
           ) : (
-            <div className="flex h-40 w-full items-center justify-center bg-slate-100">
-              <ExtintorIcon className="h-20 w-20 text-slate-300" />
+            <div className="flex h-40 w-full items-center justify-center bg-gradient-to-b from-red-50 to-red-100">
+              <ExtintorIcon className="h-24 w-24 text-red-600" />
             </div>
           )}
         </Card>
