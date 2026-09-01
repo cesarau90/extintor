@@ -13,7 +13,15 @@ function fechaEnDias(dias: number): Date {
 async function main() {
   console.log("Sembrando datos de prueba...");
 
-  // --- Usuarios ---
+  // --- Limpieza de datos previos (extintores, ubicaciones e historial) ---
+  // Se borran en este orden porque Ubicacion -> Extintor no tiene cascade.
+  // Extintor -> Inspeccion -> RespuestaInspeccion sí tienen cascade en el
+  // schema, así que borrar los extintores arrastra su historial.
+  await prisma.extintor.deleteMany();
+  await prisma.ubicacion.deleteMany();
+  console.log("Datos anteriores de extintores/ubicaciones eliminados.");
+
+  // --- Usuarios (se conservan si ya existían) ---
   const passwordAdmin = await bcrypt.hash("admin123", 10);
   const passwordInspector = await bcrypt.hash("inspector123", 10);
 
@@ -39,115 +47,209 @@ async function main() {
     },
   });
 
-  // --- Ubicaciones ---
-  const ubicacionA = await prisma.ubicacion.create({
-    data: { edificio: "Edificio A", piso: "Planta baja", area: "Pasillo" },
-  });
+  // --- Ubicaciones: zonas típicas de una institución educativa ---
+  const [
+    ubPasilloPrincipal,
+    ubRecepcion,
+    ubAula101,
+    ubBiblioteca,
+    ubComedor,
+    ubCocina,
+    ubSalaProfesores,
+    ubLabCiencias,
+    ubLabInformatica,
+    ubGimnasio,
+  ] = await Promise.all([
+    prisma.ubicacion.create({
+      data: { edificio: "Edificio A", piso: "Planta baja", area: "Pasillo principal" },
+    }),
+    prisma.ubicacion.create({
+      data: { edificio: "Edificio A", piso: "Planta baja", area: "Recepción / Dirección" },
+    }),
+    prisma.ubicacion.create({
+      data: { edificio: "Edificio A", piso: "1er piso", area: "Aula 101" },
+    }),
+    prisma.ubicacion.create({
+      data: { edificio: "Edificio A", piso: "1er piso", area: "Biblioteca" },
+    }),
+    prisma.ubicacion.create({
+      data: { edificio: "Edificio B", piso: "Planta baja", area: "Comedor / Cafetería" },
+    }),
+    prisma.ubicacion.create({
+      data: { edificio: "Edificio B", piso: "Planta baja", area: "Cocina" },
+    }),
+    prisma.ubicacion.create({
+      data: { edificio: "Edificio B", piso: "1er piso", area: "Sala de profesores" },
+    }),
+    prisma.ubicacion.create({
+      data: { edificio: "Edificio C", piso: "Planta baja", area: "Laboratorio de ciencias" },
+    }),
+    prisma.ubicacion.create({
+      data: { edificio: "Edificio C", piso: "1er piso", area: "Laboratorio de informática" },
+    }),
+    prisma.ubicacion.create({
+      data: { edificio: "Edificio C", piso: "Planta baja", area: "Gimnasio / Salón de usos múltiples" },
+    }),
+  ]);
 
-  const ubicacionB = await prisma.ubicacion.create({
-    data: { edificio: "Edificio B", piso: "1er piso", area: "Sala de profesores" },
-  });
+  console.log("10 ubicaciones creadas.");
 
-  const ubicacionC = await prisma.ubicacion.create({
-    data: { edificio: "Edificio C", piso: "2do piso", area: "Laboratorio de ciencias" },
-  });
-
-  // --- Extintores ---
-
-  // EXT-001: extintor de ejemplo del enunciado (vigente)
-  const ext001 = await prisma.extintor.create({
-    data: {
+  // --- Extintores: EXT-001 a EXT-010, códigos y series fijos ---
+  const extintoresData = [
+    {
       codigo: "EXT-001",
       numeroSerie: "SN-2026-0001",
-      ubicacionId: ubicacionA.id,
+      ubicacionId: ubPasilloPrincipal.id,
       ubicacionDescripcion: "Pasillo frente al laboratorio",
-      tipoAgente: "CO2",
+      tipoAgente: "CO2" as const,
       capacidad: 4.5,
-      unidadCapacidad: "KG",
+      unidadCapacidad: "KG" as const,
       fechaFabricacion: new Date("2025-03-01"),
       fechaRecarga: new Date("2026-03-15"),
       fechaVencimiento: new Date("2027-03-15"),
-      tipoServicio: "RECARGA",
-      observaciones: "Extintor de ejemplo cargado por el seed inicial.",
+      tipoServicio: "RECARGA" as const,
+      observaciones: "Extintor de ejemplo del enunciado original.",
     },
-  });
-
-  // Vigente (vence en 200 días)
-  const ext002 = await prisma.extintor.create({
-    data: {
+    {
       codigo: "EXT-002",
       numeroSerie: "SN-2026-0002",
-      ubicacionId: ubicacionB.id,
-      ubicacionDescripcion: "Junto a la puerta de entrada",
-      tipoAgente: "PQS",
+      ubicacionId: ubRecepcion.id,
+      ubicacionDescripcion: "Junto a la puerta de entrada principal",
+      tipoAgente: "PQS" as const,
       capacidad: 5,
-      unidadCapacidad: "KG",
+      unidadCapacidad: "KG" as const,
       fechaFabricacion: new Date("2024-06-01"),
       fechaRecarga: fechaEnDias(-165),
       fechaVencimiento: fechaEnDias(200),
-      tipoServicio: "NUEVO",
+      tipoServicio: "NUEVO" as const,
     },
-  });
-
-  // Próximo a vencer (vence en 15 días)
-  const ext003 = await prisma.extintor.create({
-    data: {
+    {
       codigo: "EXT-003",
       numeroSerie: "SN-2026-0003",
-      ubicacionId: ubicacionC.id,
-      ubicacionDescripcion: "Junto a la mesada principal",
-      tipoAgente: "ESPUMA",
-      capacidad: 6,
-      unidadCapacidad: "L",
-      fechaFabricacion: new Date("2023-01-10"),
+      ubicacionId: ubAula101.id,
+      ubicacionDescripcion: "Junto a la puerta del aula",
+      tipoAgente: "AGUA" as const,
+      capacidad: 9,
+      unidadCapacidad: "L" as const,
+      fechaFabricacion: new Date("2023-04-10"),
       fechaRecarga: fechaEnDias(-350),
       fechaVencimiento: fechaEnDias(15),
-      tipoServicio: "MANTENIMIENTO",
-      observaciones: "Programar recarga a la brevedad.",
+      tipoServicio: "MANTENIMIENTO" as const,
+      observaciones: "Próximo a vencer, programar recarga.",
     },
-  });
-
-  // Vencido (venció hace 40 días)
-  const ext004 = await prisma.extintor.create({
-    data: {
+    {
       codigo: "EXT-004",
       numeroSerie: "SN-2026-0004",
-      ubicacionId: ubicacionA.id,
-      ubicacionDescripcion: "Depósito de mantenimiento",
-      tipoAgente: "AGUA",
-      capacidad: 9,
-      unidadCapacidad: "L",
+      ubicacionId: ubBiblioteca.id,
+      ubicacionDescripcion: "Entrada de la biblioteca",
+      tipoAgente: "CO2" as const,
+      capacidad: 5,
+      unidadCapacidad: "KG" as const,
+      fechaFabricacion: new Date("2025-01-15"),
+      fechaRecarga: fechaEnDias(-90),
+      fechaVencimiento: fechaEnDias(270),
+      tipoServicio: "INSPECCION" as const,
+      observaciones: "CO2 elegido para no dañar el material bibliográfico.",
+    },
+    {
+      codigo: "EXT-005",
+      numeroSerie: "SN-2026-0005",
+      ubicacionId: ubComedor.id,
+      ubicacionDescripcion: "Pared junto a la salida del comedor",
+      tipoAgente: "PQS" as const,
+      capacidad: 5,
+      unidadCapacidad: "KG" as const,
       fechaFabricacion: new Date("2021-05-20"),
       fechaRecarga: fechaEnDias(-410),
       fechaVencimiento: fechaEnDias(-40),
-      tipoServicio: "RECARGA",
+      tipoServicio: "RECARGA" as const,
       observaciones: "Vencido, requiere recarga urgente.",
     },
-  });
-
-  // Requiere mantenimiento (vigente pero con problema detectado en inspección)
-  const ext005 = await prisma.extintor.create({
-    data: {
-      codigo: "EXT-005",
-      numeroSerie: "SN-2026-0005",
-      ubicacionId: ubicacionB.id,
+    {
+      codigo: "EXT-006",
+      numeroSerie: "SN-2026-0006",
+      ubicacionId: ubCocina.id,
+      ubicacionDescripcion: "Sobre la campana extractora",
+      tipoAgente: "WET_CHEMICAL" as const,
+      capacidad: 6,
+      unidadCapacidad: "L" as const,
+      fechaFabricacion: new Date("2025-02-10"),
+      fechaRecarga: fechaEnDias(-100),
+      fechaVencimiento: fechaEnDias(260),
+      tipoServicio: "NUEVO" as const,
+      observaciones: "Agente húmedo (clase K), apto para grasas de cocina.",
+    },
+    {
+      codigo: "EXT-007",
+      numeroSerie: "SN-2026-0007",
+      ubicacionId: ubSalaProfesores.id,
       ubicacionDescripcion: "Pasillo del gimnasio",
-      tipoAgente: "PQS_PURPURA_K",
+      tipoAgente: "PQS_PURPURA_K" as const,
       capacidad: 5,
-      unidadCapacidad: "KG",
+      unidadCapacidad: "KG" as const,
       fechaFabricacion: new Date("2024-11-01"),
       fechaRecarga: fechaEnDias(-60),
       fechaVencimiento: fechaEnDias(300),
-      tipoServicio: "INSPECCION",
+      tipoServicio: "INSPECCION" as const,
       requiereMantenimiento: true,
       observaciones: "El manómetro marca fuera de rango.",
     },
-  });
+    {
+      codigo: "EXT-008",
+      numeroSerie: "SN-2026-0008",
+      ubicacionId: ubLabCiencias.id,
+      ubicacionDescripcion: "Junto a la mesada principal",
+      tipoAgente: "ESPUMA" as const,
+      capacidad: 6,
+      unidadCapacidad: "L" as const,
+      fechaFabricacion: new Date("2023-01-10"),
+      fechaRecarga: fechaEnDias(-345),
+      fechaVencimiento: fechaEnDias(20),
+      tipoServicio: "MANTENIMIENTO" as const,
+      observaciones: "Programar recarga a la brevedad.",
+    },
+    {
+      codigo: "EXT-009",
+      numeroSerie: "SN-2026-0009",
+      ubicacionId: ubLabInformatica.id,
+      ubicacionDescripcion: "Entrada del laboratorio",
+      tipoAgente: "CO2" as const,
+      capacidad: 5,
+      unidadCapacidad: "KG" as const,
+      fechaFabricacion: new Date("2025-06-01"),
+      fechaRecarga: fechaEnDias(-45),
+      fechaVencimiento: fechaEnDias(320),
+      tipoServicio: "NUEVO" as const,
+      observaciones: "CO2 elegido por la presencia de equipo eléctrico/electrónico.",
+    },
+    {
+      codigo: "EXT-010",
+      numeroSerie: "SN-2026-0010",
+      ubicacionId: ubGimnasio.id,
+      ubicacionDescripcion: "Depósito de mantenimiento del gimnasio",
+      tipoAgente: "AGUA" as const,
+      capacidad: 9,
+      unidadCapacidad: "L" as const,
+      fechaFabricacion: new Date("2020-08-15"),
+      fechaRecarga: fechaEnDias(-400),
+      fechaVencimiento: fechaEnDias(-10),
+      tipoServicio: "RECARGA" as const,
+      observaciones: "Vencido, requiere recarga urgente.",
+    },
+  ];
 
-  // --- Inspección de ejemplo para EXT-001 ---
+  const extintoresCreados = new Map<string, string>(); // codigo -> id
+  for (const data of extintoresData) {
+    const extintor = await prisma.extintor.create({ data });
+    extintoresCreados.set(extintor.codigo, extintor.id);
+  }
+
+  console.log(`${extintoresData.length} extintores creados (EXT-001 a EXT-010).`);
+
+  // --- Inspecciones de ejemplo ---
   await prisma.inspeccion.create({
     data: {
-      extintorId: ext001.id,
+      extintorId: extintoresCreados.get("EXT-001")!,
       inspectorId: inspector.id,
       aprobada: true,
       observaciones: "Todo en orden durante la inspección mensual.",
@@ -167,10 +269,32 @@ async function main() {
     },
   });
 
-  // --- Inspección que detectó el problema de EXT-005 ---
   await prisma.inspeccion.create({
     data: {
-      extintorId: ext005.id,
+      extintorId: extintoresCreados.get("EXT-004")!,
+      inspectorId: inspector.id,
+      aprobada: true,
+      observaciones: "Sin novedades.",
+      respuestas: {
+        create: [
+          { pregunta: "¿El extintor se encuentra en su lugar?", respuesta: "SI" },
+          { pregunta: "¿El acceso al extintor está libre?", respuesta: "SI" },
+          { pregunta: "¿El extintor presenta golpes o corrosión?", respuesta: "NO" },
+          { pregunta: "¿El pasador de seguridad está colocado?", respuesta: "SI" },
+          { pregunta: "¿El sello está intacto?", respuesta: "SI" },
+          { pregunta: "¿La manguera está en buen estado?", respuesta: "SI" },
+          { pregunta: "¿La etiqueta es legible?", respuesta: "SI" },
+          { pregunta: "¿El manómetro está en rango correcto?", respuesta: "SI" },
+          { pregunta: "¿El extintor se encuentra vigente?", respuesta: "SI" },
+        ],
+      },
+    },
+  });
+
+  // Inspección que detectó el problema de EXT-007
+  await prisma.inspeccion.create({
+    data: {
+      extintorId: extintoresCreados.get("EXT-007")!,
       inspectorId: inspector.id,
       aprobada: false,
       observaciones: "El manómetro marca fuera de rango, se solicitó mantenimiento.",
@@ -193,9 +317,8 @@ async function main() {
   console.log("Seed completado:");
   console.log(`  Admin:      ${admin.email} / admin123`);
   console.log(`  Inspector:  ${inspector.email} / inspector123`);
-  console.log(
-    `  Extintores: ${ext001.codigo}, ${ext002.codigo}, ${ext003.codigo}, ${ext004.codigo}, ${ext005.codigo}`
-  );
+  console.log(`  Ubicaciones: 10`);
+  console.log(`  Extintores:  ${[...extintoresCreados.keys()].join(", ")}`);
 }
 
 main()
