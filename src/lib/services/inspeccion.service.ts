@@ -41,12 +41,13 @@ export async function crearInspeccion(params: {
       include: { respuestas: true, inspector: { select: { id: true, nombre: true, email: true } } },
     });
 
-    if (requiereMantenimiento) {
-      await tx.extintor.update({
-        where: { id: extintorId },
-        data: { requiereMantenimiento: true },
-      });
-    }
+    // Sincronizar siempre (no solo activar): una inspección nueva sin
+    // problemas debe "cerrar" el aviso de mantenimiento que haya dejado una
+    // inspección anterior.
+    await tx.extintor.update({
+      where: { id: extintorId },
+      data: { requiereMantenimiento },
+    });
 
     return inspeccion;
   });

@@ -67,6 +67,9 @@ export function ExtintorForm({ modo, ubicaciones, extintor }: Props) {
         tipoServicio: form.get("tipoServicio"),
         foto: form.get("foto") || null,
         observaciones: form.get("observaciones") || null,
+        ...(modo === "editar"
+          ? { requiereMantenimiento: form.get("requiereMantenimiento") === "on" }
+          : {}),
       };
 
       const url = modo === "crear" ? "/api/extintores" : `/api/extintores/${extintor!.codigo}`;
@@ -227,6 +230,33 @@ export function ExtintorForm({ modo, ubicaciones, extintor }: Props) {
           </Select>
         </CardBody>
       </Card>
+
+      {modo === "editar" && (
+        <Card>
+          <CardHeader>
+            <h2 className="font-semibold text-slate-900">Estado de mantenimiento</h2>
+          </CardHeader>
+          <CardBody>
+            <label className="flex items-start gap-3 text-sm">
+              <input
+                type="checkbox"
+                name="requiereMantenimiento"
+                defaultChecked={extintor?.requiereMantenimiento ?? false}
+                className="mt-0.5 h-4 w-4 rounded border-slate-300 text-red-600 focus:ring-red-500"
+              />
+              <span>
+                <span className="font-medium text-slate-900">Requiere mantenimiento</span>
+                <p className="text-xs text-slate-500">
+                  Se activa solo cuando una inspección detecta un problema. Si ya se resolvió
+                  el problema físico del extintor, desmarcá esta casilla para quitar la
+                  alerta (también se apaga automáticamente al registrar una inspección nueva
+                  sin novedades).
+                </p>
+              </span>
+            </label>
+          </CardBody>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
