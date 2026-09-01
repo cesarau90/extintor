@@ -4,6 +4,7 @@ import { obtenerExtintorPorCodigo } from "@/lib/services/extintor.service";
 import { listarInspecciones } from "@/lib/services/inspeccion.service";
 import { getSession } from "@/lib/auth";
 import { EstadoBadge } from "@/components/extintor/EstadoBadge";
+import { ExtintorIcon } from "@/components/extintor/ExtintorIcon";
 import { InspeccionHistorial } from "@/components/extintor/InspeccionHistorial";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -48,12 +49,16 @@ export default async function FichaExtintorPage({ params }: Props) {
       </div>
 
       <div className="mx-auto max-w-lg space-y-4 px-4 py-5">
-        {extintor.foto && (
-          <Card className="overflow-hidden">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
+        <Card className="overflow-hidden">
+          {extintor.foto ? (
+            // eslint-disable-next-line @next/next/no-img-element
             <img src={extintor.foto} alt={extintor.codigo} className="h-56 w-full object-cover" />
-          </Card>
-        )}
+          ) : (
+            <div className="flex h-40 w-full items-center justify-center bg-slate-100">
+              <ExtintorIcon className="h-20 w-20 text-slate-300" />
+            </div>
+          )}
+        </Card>
 
         {extintor.problemasDetectados.length > 0 && (
           <Card className="border-amber-200 bg-amber-50">
