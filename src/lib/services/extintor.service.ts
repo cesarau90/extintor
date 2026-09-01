@@ -109,6 +109,38 @@ export async function calcularDashboardStats() {
   };
 }
 
+/**
+ * Sugiere el próximo código (EXT-###) y número de serie (SN-AAAA-####)
+ * siguiendo la numeración ya usada, para que al crear un extintor no se
+ * puedan escribir valores arbitrarios: el formulario los muestra fijos.
+ */
+export async function sugerirCodigoYSerie(): Promise<{
+  codigo: string;
+  numeroSerie: string;
+}> {
+  const extintores = await prisma.extintor.findMany({
+    select: { codigo: true, numeroSerie: true },
+  });
+
+  let maxCodigo = 0;
+  let maxSerie = 0;
+
+  for (const e of extintores) {
+    const mCodigo = e.codigo.match(/^EXT-(\d+)$/);
+    if (mCodigo) maxCodigo = Math.max(maxCodigo, parseInt(mCodigo[1], 10));
+
+    const mSerie = e.numeroSerie?.match(/^SN-\d{4}-(\d+)$/);
+    if (mSerie) maxSerie = Math.max(maxSerie, parseInt(mSerie[1], 10));
+  }
+
+  const anio = new Date().getFullYear();
+
+  return {
+    codigo: `EXT-${String(maxCodigo + 1).padStart(3, "0")}`,
+    numeroSerie: `SN-${anio}-${String(maxSerie + 1).padStart(4, "0")}`,
+  };
+}
+
 export async function calcularAlertas() {
   const extintores = await listarExtintores();
   return {

@@ -14,9 +14,20 @@ interface Props {
   modo: "crear" | "editar";
   ubicaciones: Ubicacion[];
   extintor?: ExtintorConEstado;
+  /** Solo en modo "crear": código y número de serie ya calculados por el
+   * servidor siguiendo la numeración existente. Se muestran fijos (no
+   * editables) para que no se puedan cargar valores arbitrarios. */
+  codigoSugerido?: string;
+  numeroSerieSugerido?: string;
 }
 
-export function ExtintorForm({ modo, ubicaciones, extintor }: Props) {
+export function ExtintorForm({
+  modo,
+  ubicaciones,
+  extintor,
+  codigoSugerido,
+  numeroSerieSugerido,
+}: Props) {
   const router = useRouter();
   const [nuevaUbicacion, setNuevaUbicacion] = useState(ubicaciones.length === 0);
   const [error, setError] = useState<string | null>(null);
@@ -51,11 +62,12 @@ export function ExtintorForm({ modo, ubicaciones, extintor }: Props) {
       }
 
       const payload = {
-        // En modo "editar" el input de código está deshabilitado y por lo
-        // tanto no viaja en el FormData: no incluir la clave evita mandar
-        // `codigo: null` y romper la validación del PUT.
-        ...(modo === "crear" ? { codigo: form.get("codigo") } : {}),
-        numeroSerie: form.get("numeroSerie") || null,
+        // El código y el número de serie salen de la sugerencia calculada
+        // por el servidor, no del input (que está deshabilitado en modo
+        // "crear" y por lo tanto no viaja en el FormData). En modo "editar"
+        // no se incluye la clave "codigo": es inmodificable una vez creado.
+        ...(modo === "crear" ? { codigo: codigoSugerido } : {}),
+        numeroSerie: modo === "crear" ? numeroSerieSugerido || null : form.get("numeroSerie") || null,
         ubicacionId,
         ubicacionDescripcion: form.get("ubicacionDescripcion") || null,
         tipoAgente: form.get("tipoAgente"),
@@ -106,14 +118,16 @@ export function ExtintorForm({ modo, ubicaciones, extintor }: Props) {
             name="codigo"
             label="Código"
             required
-            disabled={modo === "editar"}
-            defaultValue={extintor?.codigo}
-            placeholder="EXT-001"
+            disabled
+            defaultValue={modo === "crear" ? codigoSugerido : extintor?.codigo}
+            hint={modo === "crear" ? "Se asigna automáticamente siguiendo la numeración" : undefined}
           />
           <Input
             name="numeroSerie"
             label="Número de serie"
-            defaultValue={extintor?.numeroSerie ?? ""}
+            disabled={modo === "crear"}
+            defaultValue={modo === "crear" ? numeroSerieSugerido : extintor?.numeroSerie ?? ""}
+            hint={modo === "crear" ? "Se asigna automáticamente siguiendo la numeración" : undefined}
           />
         </CardBody>
       </Card>
