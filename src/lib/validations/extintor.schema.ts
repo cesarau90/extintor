@@ -33,6 +33,9 @@ export const extintorSchema = z.object({
 
 export const extintorUpdateSchema = extintorSchema.partial().extend({
   codigo: extintorSchema.shape.codigo.optional(),
+  /** Preguntas puntuales del checklist de la última inspección que se
+   * tildan como ya resueltas (se van sumando, no reemplazan la lista). */
+  problemasAResolver: z.array(z.string()).optional(),
 });
 
 export const ubicacionSchema = z.object({

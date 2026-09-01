@@ -44,10 +44,12 @@ export async function crearInspeccion(params: {
 
     // Sincronizar siempre (no solo activar): una inspección nueva sin
     // problemas debe "cerrar" el aviso de mantenimiento que haya dejado una
-    // inspección anterior.
+    // inspección anterior. problemasResueltos se reinicia porque es un
+    // checklist nuevo: lo que se haya tildado sobre la inspección vieja ya
+    // no aplica.
     await tx.extintor.update({
       where: { id: extintorId },
-      data: { requiereMantenimiento },
+      data: { requiereMantenimiento, problemasResueltos: [] },
     });
 
     return inspeccion;

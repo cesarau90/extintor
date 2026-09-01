@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { exigirRol, manejarErrorApi, ApiError } from "@/lib/api-helpers";
 import { extintorUpdateSchema } from "@/lib/validations/extintor.schema";
-import { obtenerExtintorPorCodigo } from "@/lib/services/extintor.service";
+import { obtenerExtintorPorCodigo, resolverProblemasPuntuales } from "@/lib/services/extintor.service";
 
 interface Params {
   params: Promise<{ codigo: string }>;
@@ -42,9 +42,19 @@ export async function PUT(request: NextRequest, { params }: Params) {
       }
     }
 
+    const { problemasAResolver, ...datosExtintor } = parsed.data;
+
+    if (problemasAResolver && problemasAResolver.length > 0) {
+      const resultado = await resolverProblemasPuntuales({
+        extintorId: existente.id,
+        preguntasResueltas: problemasAResolver,
+      });
+      Object.assign(datosExtintor, resultado);
+    }
+
     const extintor = await prisma.extintor.update({
       where: { codigo },
-      data: parsed.data,
+      data: datosExtintor,
       include: { ubicacion: true },
     });
 

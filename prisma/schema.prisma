@@ -84,6 +84,11 @@ model Extintor {
   fechaVencimiento      DateTime
   tipoServicio          TipoServicio @default(NUEVO)
   requiereMantenimiento Boolean      @default(false)
+  /** Preguntas del checklist de la última inspección que ya se resolvieron
+   * puntualmente (se van tildando una por una sin necesidad de una
+   * inspección nueva). Se reinicia vacío cada vez que se registra una
+   * inspección nueva, porque es un checklist distinto. */
+  problemasResueltos    String[]     @default([])
   activo                Boolean      @default(true)
   foto                  String?
   observaciones         String?

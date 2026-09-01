@@ -22,12 +22,14 @@ function conEstado(
   // Los problemas puntuales solo se pueden mostrar si el estado actual
   // "requiere mantenimiento" viene de esa última inspección: si alguien
   // prendió la bandera a mano desde el formulario, no hay checklist que
-  // explique el motivo.
+  // explique el motivo. Los que ya se tildaron como resueltos (uno por uno,
+  // sin necesidad de una inspección nueva) se excluyen de la lista.
   const problemasDetectados =
     extintor.requiereMantenimiento && ultimaInspeccion
       ? ultimaInspeccion.respuestas
           .filter((r) => esRespuestaProblema(r.pregunta, r.respuesta))
           .map((r) => r.pregunta)
+          .filter((p) => !extintor.problemasResueltos.includes(p))
       : [];
 
   return {
@@ -155,6 +157,43 @@ export async function sugerirCodigoYSerie(): Promise<{
     codigo: `EXT-${String(maxCodigo + 1).padStart(3, "0")}`,
     numeroSerie: `SN-${anio}-${String(maxSerie + 1).padStart(4, "0")}`,
   };
+}
+
+/**
+ * Tilda como resueltas una o más preguntas puntuales del checklist de la
+ * última inspección (se suman a las que ya estuvieran resueltas). Si con
+ * esto ya no queda ningún punto pendiente de esa inspección, apaga
+ * "requiere mantenimiento" automáticamente.
+ */
+export async function resolverProblemasPuntuales(params: {
+  extintorId: string;
+  preguntasResueltas: string[];
+}): Promise<{ requiereMantenimiento: boolean; problemasResueltos: string[] }> {
+  const [extintor, ultimaInspeccion] = await Promise.all([
+    prisma.extintor.findUnique({
+      where: { id: params.extintorId },
+      select: { problemasResueltos: true },
+    }),
+    prisma.inspeccion.findFirst({
+      where: { extintorId: params.extintorId },
+      orderBy: { fecha: "desc" },
+      include: { respuestas: true },
+    }),
+  ]);
+
+  const problemasResueltos = Array.from(
+    new Set([...(extintor?.problemasResueltos ?? []), ...params.preguntasResueltas])
+  );
+
+  let requiereMantenimiento = true;
+  if (ultimaInspeccion) {
+    const problemasBrutos = ultimaInspeccion.respuestas
+      .filter((r) => esRespuestaProblema(r.pregunta, r.respuesta))
+      .map((r) => r.pregunta);
+    requiereMantenimiento = problemasBrutos.some((p) => !problemasResueltos.includes(p));
+  }
+
+  return { requiereMantenimiento, problemasResueltos };
 }
 
 export async function calcularAlertas() {
